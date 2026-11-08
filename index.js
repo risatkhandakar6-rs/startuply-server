@@ -34,14 +34,30 @@ async function run() {
       const result = await ideasCollection.find().toArray();
       res.send(result)
     })
-    app.get('/ideas/:id',async (req, res) => {
+    app.get('/ideas/:id', async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id)
       };
       const result = await ideasCollection.findOne(query);
       res.send(result)
+    });
+
+    app.patch('/ideas/:id',async (req, res) => {
+      const { id } = req.params;
+      const modify = req.body;
+      const result = await ideasCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: modify }
+      );
+      res.send(result)
     })
+   
+
+
+
+
+
 
     await client.db('admin').command({ ping: 1 });
     console.log('ping your deployment')
