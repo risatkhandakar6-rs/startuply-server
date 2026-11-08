@@ -43,13 +43,21 @@ async function run() {
       res.send(result)
     });
 
-    app.patch('/ideas/:id',async (req, res) => {
+    app.patch('/ideas/:id', async (req, res) => {
       const { id } = req.params;
       const modify = req.body;
       const result = await ideasCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: modify }
       );
+      res.send(result)
+    });
+    app.delete('/ideas/:id', async (req, res) => {
+      const { id } = req.params;
+      const query = {
+        _id: new ObjectId(id)
+      };
+      const result = await ideasCollection.deleteOne(query);
       res.send(result)
     })
    
