@@ -34,7 +34,19 @@ async function run() {
       const result = await ideasCollection.find().toArray();
       res.send(result)
     })
-    app.get('/ideas/:id', async (req, res) => {
+    app.get('/ideas/:id',
+      (req,res,next) => {
+        const header = req.headers.authorization
+        if (header === 'logged in') {
+          next();
+          console.log('user is authorized')
+          
+        }
+        else {
+           res.status(401).json({ message: 'unauthorized' })
+        }
+      },
+      async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id)
