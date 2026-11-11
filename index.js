@@ -2,6 +2,7 @@ const express = require('express')
 const dontenv = require('dotenv')
 const cors =require('cors')
 const { MongoClient, ServerApiVersion, ObjectId, } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 dontenv.config()
 const uri =process.env.MONGO_URI
 const app = express()
@@ -18,10 +19,25 @@ const client = new MongoClient(uri, {
   }
 });
 
+const JWKS = createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'))
+
 const verifyToken = async (req,res,next) => {
   const authheaders = req?.headers?.authorization;
+  
+    if (!authheaders) return res.status(401).json({ message: 'unauthorized' })
   const token = authheaders.split(' ')[1];
-  console.log(token)
+  if (!token) return res.status(401).json({ message: 'unauthorized' })
+  console.log(token);
+  
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload)
+    next()
+  } catch {
+     return res.status(401).json({ message: 'unauthorized' })
+  }
+
+  
 }
 
 async function run() {
@@ -31,7 +47,7 @@ async function run() {
     const db = client.db('startuply');
     const ideasCollection = db.collection('ideas')
     
-    app.post('/idea', async (req, res) => {
+    app.post('/idea',verifyToken, async (req, res) => {
       const ideasData = req.body;
       console.log(ideasData)
       const result = await ideasCollection.insertOne(ideasData)
@@ -50,7 +66,7 @@ async function run() {
       res.send(result)
     });
 
-    app.patch('/ideas/:id', async (req, res) => {
+    app.patch('/ideas/:id', verifyToken, async (req, res) => {
       const { id } = req.params;
       const modify = req.body;
       const result = await ideasCollection.updateOne(
@@ -59,7 +75,7 @@ async function run() {
       );
       res.send(result)
     });
-    app.delete('/ideas/:id', async (req, res) => {
+    app.delete('/ideas/:id',verifyToken, async (req, res) => {
       const { id } = req.params;
       const query = {
         _id: new ObjectId(id)
