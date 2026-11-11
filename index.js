@@ -17,6 +17,13 @@ const client = new MongoClient(uri, {
     descriptionErrors: true
   }
 });
+
+const verifyToken = async (req,res,next) => {
+  const authheaders = req?.headers?.authorization;
+  const token = authheaders.split(' ')[1];
+  console.log(token)
+}
+
 async function run() {
   try {
     await client.connect();
@@ -34,7 +41,7 @@ async function run() {
       const result = await ideasCollection.find().toArray();
       res.send(result)
     })
-    app.get('/ideas/:id', async (req, res) => {
+    app.get('/ideas/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id)
