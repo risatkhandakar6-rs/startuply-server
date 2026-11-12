@@ -45,7 +45,8 @@ async function run() {
     await client.connect();
 
     const db = client.db('startuply');
-    const ideasCollection = db.collection('ideas')
+    const ideasCollection = db.collection('ideas');
+    const myCollection = db.collection('myIdea');
     
     app.post('/idea',verifyToken, async (req, res) => {
       const ideasData = req.body;
@@ -75,12 +76,21 @@ async function run() {
       );
       res.send(result)
     });
-    app.delete('/ideas/:id',verifyToken, async (req, res) => {
+    app.delete('/ideas/:id', verifyToken, async (req, res) => {
       const { id } = req.params;
       const query = {
         _id: new ObjectId(id)
       };
       const result = await ideasCollection.deleteOne(query);
+      res.send(result)
+    });
+    app.post('/my-idea', async (req, res) => {
+      const result = await myCollection.insertOne(req.body);
+      res.send(result)
+    });
+    app.get('/my-idea/:userId',async (req, res) => {
+      const { userId } = req.params;
+      const result = await myCollection.find({ userId: userId }).toArray();
       res.send(result)
     })
    
