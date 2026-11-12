@@ -47,6 +47,12 @@ async function run() {
     const db = client.db('startuply');
     const ideasCollection = db.collection('ideas');
     const myCollection = db.collection('myIdea');
+
+
+    app.get('/featured',async (req, res) => {
+      const result = await ideasCollection.find().limit(6).toArray();
+      res.send(result)
+    })
     
     app.post('/idea',verifyToken, async (req, res) => {
       const ideasData = req.body;
