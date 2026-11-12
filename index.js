@@ -55,15 +55,40 @@ async function run() {
     })
     
     app.post('/idea',verifyToken, async (req, res) => {
-      const ideasData = req.body;
-      console.log(ideasData)
+      const ideasData = { ...req.body, createdAt: new Date() };
       const result = await ideasCollection.insertOne(ideasData)
       res.send(result)
     });
-    app.get('/ideas',async (req, res) => {
-      const result = await ideasCollection.find().toArray();
-      res.send(result)
-    })
+ 
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+app.get('/idea', async (req, res) => {
+  const { search, category, from, to } = req.query;
+  const query = {};
+
+  if (search) {
+    query.title = { $regex: escapeRegex(search), $options: 'i' };
+  }
+
+
+  if (category && category !== 'All') {
+    query.category = category;
+  }
+
+ 
+  if (from || to) {
+    query.createdAt = {};
+    if (from) query.createdAt.$gte = new Date(from);
+    if (to) {
+      const end = new Date(to);
+      end.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = end;
+    }
+  }
+
+  const result = await ideasCollection.find(query).toArray();
+  res.send(result);
+});
     app.get('/ideas/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = {
